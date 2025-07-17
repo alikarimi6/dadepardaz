@@ -4,9 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
+use App\Models\Expense;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -20,7 +22,8 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'password',
+        'phone' ,
+        'national_code'
     ];
 
     /**
@@ -45,4 +48,13 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function expenses () : HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+    public function ibans () : HasMany
+    {
+        return $this->hasMany(UserIban::class);
+    }
+
 }
