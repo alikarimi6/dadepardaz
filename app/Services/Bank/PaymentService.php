@@ -2,8 +2,8 @@
 
 namespace App\Services\Bank;
 
+use App\Services\Bank\Payment\Contracts\PaymentMethodInterface;
 use App\Services\Bank\Payment\ManualPayment;
-use App\Services\Bank\Payment\PaymentMethodInterface;
 use App\Services\Bank\Payment\ScheduledPayment;
 
 class PaymentService

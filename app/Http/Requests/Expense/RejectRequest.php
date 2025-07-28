@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Expense;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ApproveRequest extends FormRequest
+class RejectRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +22,7 @@ class ApproveRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_method' => 'required|in:manual,scheduled'
+            'rejection_comment' => 'required|string'
         ];
     }
 }

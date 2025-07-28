@@ -2,7 +2,7 @@
 
 namespace App\Services\Bank;
 
-use App\Services\Bank\BankInterface;
+use App\Services\Bank\Contracts\BankInterface;
 
 class TejaratBank implements BankInterface
 {

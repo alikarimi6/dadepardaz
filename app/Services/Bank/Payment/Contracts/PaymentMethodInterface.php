@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services\Bank\Payment;
+namespace App\Services\Bank\Payment\Contracts;
 
-use App\Services\Bank\BankInterface;
+use App\Services\Bank\Contracts\BankInterface;
 
 interface PaymentMethodInterface
 {

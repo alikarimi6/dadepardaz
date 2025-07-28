@@ -3,8 +3,8 @@
 namespace App\Services\Bank\Payment;
 
 use App\Models\ExpensePaymentLog;
-use App\Services\Bank\BankInterface;
-use App\Services\Bank\Payment\PaymentMethodInterface;
+use App\Services\Bank\Contracts\BankInterface;
+use App\Services\Bank\Payment\Contracts\PaymentMethodInterface;
 
 class ManualPayment implements PaymentMethodInterface
 {

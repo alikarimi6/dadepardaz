@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Bank;
+namespace App\Services\Bank\Contracts;
 
 interface BankInterface
 {

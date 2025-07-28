@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\V1\Expense;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ExpenseAttachController extends Controller
 {
     public function download($filepath)
     {
-        $file = storage_path("app/public/$filepath");
-
-        if (!file_exists($file)) {
+        if (!Storage::disk('public')->exists($filepath)) {
             abort(404);
         }
+
+        $file = Storage::disk('public')->path($filepath);
 
         return response()->download($file);
     }

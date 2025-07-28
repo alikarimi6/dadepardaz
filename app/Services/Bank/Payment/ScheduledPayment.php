@@ -4,7 +4,8 @@ namespace App\Services\Bank\Payment;
 
 use App\Jobs\ScheduledBankPayment;
 use App\Models\ExpensePaymentLog;
-use App\Services\Bank\BankInterface;
+use App\Services\Bank\Contracts\BankInterface;
+use App\Services\Bank\Payment\Contracts\PaymentMethodInterface;
 
 class ScheduledPayment implements PaymentMethodInterface
 {
@@ -13,6 +14,7 @@ class ScheduledPayment implements PaymentMethodInterface
     {
         $scheduleTime = now()->addMinutes(1);
         try {
+//            refactor : schedule with command
             ScheduledBankPayment::dispatch($bank, $iban, $amount , $expenseId)
                 ->delay($scheduleTime);
             ExpensePaymentLog::create([

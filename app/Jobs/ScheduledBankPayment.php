@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\Bank\BankInterface;
+use App\Services\Bank\Contracts\BankInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;

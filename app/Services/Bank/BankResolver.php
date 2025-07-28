@@ -2,6 +2,8 @@
 
 namespace App\Services\Bank;
 
+use App\Services\Bank\Contracts\BankInterface;
+
 class BankResolver {
     /** @var BankInterface[] */
     private array $banks;

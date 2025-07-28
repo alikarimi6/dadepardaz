@@ -1,17 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\V1\Expense;
 
 use App\Events\ExpenseApproved;
 use App\Events\ExpenseRejected;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ApproveRequest;
-use App\Http\Requests\StoreExpenseRequest;
+use App\Http\Requests\Expense\ApproveRequest;
+use App\Http\Requests\Expense\RejectRequest;
+use App\Http\Requests\Expense\StoreExpenseRequest;
 use App\Http\Resources\Api\V1\ExpenseResource;
 use App\Models\Expense;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ExpenseController extends Controller
 {
@@ -49,7 +51,7 @@ class ExpenseController extends Controller
     {
 
         $firstFile = is_array($file) ? $file[0] : $file;
-        $path = $firstFile->store('attachments/expenses' , 'public');
+        $path = Storage::disk('public')->path($firstFile);
         $expense->attachment()->create([
             'file_path' => $path
         ]);
@@ -64,12 +66,12 @@ class ExpenseController extends Controller
             'expense' => ExpenseResource::make($expense),]);
     }
 
-    public function reject(Request $request, Expense $expense): JsonResponse
+    public function reject(RejectRequest $request, Expense $expense): JsonResponse
     {
-        $request->validate(['rejection_comment' => 'required|string',]);
+        $data = $request->validated();
 
         event(new ExpenseRejected( $expense->user()->first() , $expense
-            , $request->rejection_comment));
+            , $data['rejection_comment']));
 
         return response()->json([
             'message' => 'expense rejected' ,
@@ -106,16 +108,30 @@ class ExpenseController extends Controller
     /**
      * Display the specified resource.
      */
-//    public function show(string $id): JsonResponse
-//    {
-//        $expense = Expense::find($id);
-//
-//        if (!$expense) {
-//            return response()->json(['message' => 'not found'], 404);
-//        }
-//
-//        return response()->json($expense, 200);
-//    }
+    public function show(string $id): JsonResponse
+    {
+        $expense = Expense::find($id);
+
+        if (!$expense) {
+            return response()->json(['message' => 'not found'], 404);
+        }
+
+        return response()->json($expense, 200);
+    }
+
+    public function destroy(string $id): JsonResponse
+    {
+        $expense = Expense::find($id);
+
+        if (!$expense) {
+            return response()->json(['message' => 'not found'], 404);
+        }
+
+        $expense->delete();
+
+        return response()->json(['message' => 'destroyed successfully'], 200);
+    }
+
 //
 //    /**
 //     * Update the specified resource in storage.
@@ -144,17 +160,5 @@ class ExpenseController extends Controller
 //    /**
 //     * Remove the specified resource from storage.
 //     */
-//    public function destroy(string $id): JsonResponse
-//    {
-//        $expense = Expense::find($id);
-//
-//        if (!$expense) {
-//            return response()->json(['message' => 'not found'], 404);
-//        }
-//
-//        $expense->delete();
-//
-//        return response()->json(['message' => 'destroyed successfully'], 200);
-//    }
 
 }
