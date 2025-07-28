@@ -27,7 +27,7 @@ Route::prefix('v1')->group(function (){
 
 //    add acl or policy to expenses
     Route::prefix('expenses')->name('expenses.')->middleware('auth:sanctum')->group(function (){
-        Route::apiResource('' , ExpenseController::class )->only(['index' , 'approve' , 'reject']);
+        Route::apiResource('' , ExpenseController::class )->only(['index' , 'approve' , 'reject' , 'store']);
         Route::get('categories', [ExpenseCategoryController::class, 'index'])->name('categories');
         Route::post('{expense}/approve', [ExpenseController::class, 'approve'])->name('approve');
         Route::post('{expense}/reject', [ExpenseController::class, 'reject'])->name('reject');

@@ -23,7 +23,7 @@ class CheckOwner
             return response()->json( ['message' => 'محصول پیدا نشد.' ], 404);
         }
 
-        if ($product->user_id !== auth()->id()) {
+        if ($product->user_id != auth()->id()) {
             return response()->json(['message' => 'دسترسی ندارید.'] , 403);
         }
         return $next($request);

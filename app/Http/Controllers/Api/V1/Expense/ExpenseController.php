@@ -13,6 +13,7 @@ use App\Models\Expense;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 
 class ExpenseController extends Controller
@@ -49,9 +50,9 @@ class ExpenseController extends Controller
 
     private function storeAttachFile(Expense $expense , $file): void
     {
-
+        $dir = Config::get('storage_paths.expense_attachments');
         $firstFile = is_array($file) ? $file[0] : $file;
-        $path = Storage::disk('public')->path($firstFile);
+        $path = Storage::disk('public')->put($dir , $firstFile);
         $expense->attachment()->create([
             'file_path' => $path
         ]);
