@@ -6,17 +6,16 @@ use App\Jobs\ScheduledBankPayment;
 use App\Models\ExpensePaymentLog;
 use App\Services\Bank\Contracts\BankInterface;
 use App\Services\Bank\Payment\Contracts\PaymentMethodInterface;
+use Illuminate\Support\Facades\Config;
 
 class ScheduledPayment implements PaymentMethodInterface
 {
 
     public function pay(BankInterface $bank , string $iban , string $amount , string $expenseId)
     {
-        $scheduleTime = now()->addMinutes(1);
+        $scheduleTime = now()->addMinutes(Config::get('payment.schedule_time'));
         try {
-//            refactor : schedule with command
-            ScheduledBankPayment::dispatch($bank, $iban, $amount , $expenseId)
-                ->delay($scheduleTime);
+
             ExpensePaymentLog::create([
                 'bank_id' => $bank->getId(),
                 'expense_id' => $expenseId,

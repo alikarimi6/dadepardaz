@@ -3,9 +3,7 @@
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Expense\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\Expense\ExpenseController;
-use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Middleware\Expense\CheckOwner;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
