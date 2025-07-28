@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Expense\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\Expense\ExpenseController;
 use App\Http\Middleware\Expense\CheckOwner;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,7 @@ Route::prefix('v1')->group(function (){
     Route::apiResource('expenses' , ExpenseController::class )->only(['show' , 'destroy'])->middleware(['auth:sanctum' , CheckOwner::class]);
 
 //    add acl or policy to expenses
+//    define admin & supervisor routes
     Route::prefix('expenses')->name('expenses.')->middleware('auth:sanctum')->group(function (){
         Route::apiResource('' , ExpenseController::class )->only(['index' , 'approve' , 'reject' , 'store']);
         Route::get('categories', [ExpenseCategoryController::class, 'index'])->name('categories');
@@ -34,4 +36,12 @@ Route::prefix('v1')->group(function (){
             Route::post('rejects' , [ExpenseController::class , 'bulkReject'])->name('reject') ;
         });
     });
+});
+Route::get('token' , function (){
+    $user = User::query()->find(1);
+    return response()->json(['key' => $user->createToken('test' )->plainTextToken] , 200);
+});
+
+Route::get('test' , function (){
+//    return response()->json(['data' => auth('sanctum')->user()->can('approve by owner')], 200);
 });

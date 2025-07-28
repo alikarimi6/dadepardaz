@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\States\Payment\PaymentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Spatie\ModelStates\HasStates;
 
 class Expense extends Model
 {
@@ -31,5 +34,20 @@ class Expense extends Model
     public function category() : BelongsTo
     {
         return $this->belongsTo(ExpenseCategory::class);
+    }
+
+    public function payment(): HasOne
+    {
+        return $this->hasOne(ExpensePaymentLog::class);
+    }
+
+    public function paymentStatus(): HasOneThrough
+    {
+        return $this->HasOneThrough(
+            PaymentStatusTransition::class,
+            ExpensePaymentLog::class ,
+            'expense_id',
+            'payment_id',
+        );
     }
 }

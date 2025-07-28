@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('expense_id')->constrained('expenses')->onDelete('cascade');
             $table->enum('method' , ['manual' , 'scheduled']);
             $table->dateTime('scheduled_at')->nullable();
+            $table->string('state')->default('requested');
             $table->enum('status' , ['paid', 'failed']);
             $table->string('exception_type')->nullable();
             $table->timestamps();

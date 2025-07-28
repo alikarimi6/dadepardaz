@@ -3,9 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\ExpenseApproved;
-use App\Events\ExpenseRejected;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+use App\States\Payment\VerifiedBySupervisor;
 
 class ApproveExpenseListener
 {
