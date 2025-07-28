@@ -59,7 +59,9 @@ class ExpenseController extends Controller
     }
     public function approve(ApproveRequest $request ,Expense $expense): JsonResponse
     {
-        event(new ExpenseApproved($expense->user()->first() , $expense , $request->payment_method
+        $user = auth()->user();
+        event(new ExpenseApproved($expense->user()->first() , $expense , $request->payment_method ,
+        auth()->user()
         ));
 
         return response()->json([

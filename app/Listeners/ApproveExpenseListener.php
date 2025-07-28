@@ -20,9 +20,11 @@ class ApproveExpenseListener
      */
     public function handle(ExpenseApproved $event): void
     {
+        $rule = $event->performedBy->getRoleNames()->first();
+        $event->expense->state->transitionTo(VerifiedBySupervisor::class);
         $event->expense->update([
-            'status' => 'approved',
             'rejection_comment' => null,
         ]);
+
     }
 }

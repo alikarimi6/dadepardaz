@@ -44,5 +44,9 @@ class DatabaseSeeder extends Seeder
                 ]);
             })
             ->create();
+        $this->call([
+            RolesAndPermissionsSeeder::class,
+        ]);
     }
+
 }

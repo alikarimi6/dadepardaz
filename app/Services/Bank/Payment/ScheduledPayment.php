@@ -15,19 +15,19 @@ class ScheduledPayment implements PaymentMethodInterface
     {
         $scheduleTime = now()->addMinutes(Config::get('payment.schedule_time'));
         try {
-
-            ExpensePaymentLog::create([
-                'bank_id' => $bank->getId(),
-                'expense_id' => $expenseId,
+            ExpensePaymentLog::query()->updateOrCreate(
+                ['expense_id' => $expenseId,] ,
+                ['bank_id' => $bank->getId(),
                 'method' => 'scheduled',
                 'scheduled_at' => $scheduleTime,
                 'status' => 'paid',
                 'exception_type' => null,
             ]);
         } catch (\Throwable $e) {
-            ExpensePaymentLog::create([
-                'bank_id' => $bank->getId(),
-                'expense_id' => $expenseId,
+
+            ExpensePaymentLog::query()->updateOrCreate(
+                ['expense_id' => $expenseId,]
+                ,['bank_id' => $bank->getId(),
                 'status' => 'failed',
                 'method' => 'scheduled' ,
                 'exception_type' => get_class($e),

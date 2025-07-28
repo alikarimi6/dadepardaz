@@ -12,7 +12,7 @@ use Spatie\ModelStates\HasStates;
 
 class Expense extends Model
 {
-    use HasFactory;
+    use HasStates , HasFactory;
     protected $fillable = [
         'category_id' ,
         'user_id' ,
@@ -21,6 +21,13 @@ class Expense extends Model
         'rejection_comment' ,
         'iban' ,
         'paid_at' ,
+        'state' ,
+    ];
+//    protected $states = [
+//        'state' => PaymentStatus::class,
+//    ];
+    protected $casts = [
+        'state' => PaymentStatus::class,
     ];
     public function user() : BelongsTo
     {

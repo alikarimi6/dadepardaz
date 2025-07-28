@@ -11,7 +11,6 @@ use Spatie\ModelStates\HasStates;
 
 class ExpensePaymentLog extends Model
 {
-    use HasStates;
     protected $table = 'payment_logs';
     protected $fillable = [
         'bank_id',
@@ -20,13 +19,6 @@ class ExpensePaymentLog extends Model
         'exception_type',
         'method' ,
         'scheduled_at'
-    ];
-
-    protected $states = [
-        'state' => PaymentStatus::class,
-    ];
-    protected $casts = [
-        'state' => PaymentStatus::class,
     ];
     public function expense(): BelongsTo
     {

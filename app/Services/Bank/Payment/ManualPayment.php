@@ -14,17 +14,17 @@ class ManualPayment implements PaymentMethodInterface
     {
         try {
             $bank->pay($amount , 'manual callback' , $expenseId);
-            $payment = ExpensePaymentLog::create([
-                'bank_id' => $bank->getId(),
-                'expense_id' => $expenseId,
+            $payment = ExpensePaymentLog::query()->updateOrCreate(
+                ['expense_id' => $expenseId],
+                ['bank_id' => $bank->getId(),
                 'method' => 'manual',
                 'status' => 'paid',
                 'exception_type' => null,
-            ]);
+                ]);
         } catch (\Throwable $e) {
-            ExpensePaymentLog::create([
-                'bank_id' => $bank->getId(),
-                'expense_id' => $expenseId,
+            ExpensePaymentLog::query()->updateOrCreate(
+                ['expense_id' => $expenseId],
+                ['bank_id' => $bank->getId(),
                 'status' => 'failed',
                 'method' => 'manual' ,
                 'exception_type' => get_class($e),

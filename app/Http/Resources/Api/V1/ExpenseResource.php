@@ -17,7 +17,7 @@ class ExpenseResource extends JsonResource
         return [
             'id' => $this->id,
             'amount' => $this->amount,
-            'status' => $this->status ,
+            'state' => $this->state ,
             'rejection_comment' => $this->rejection_comment,
             'user' => optional($this->user)->name,
             'category' => optional($this->category)->name,

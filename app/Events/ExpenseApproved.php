@@ -23,8 +23,8 @@ class ExpenseApproved
         public User $user ,
         public Expense $expense ,
         public $paymentMethod,
-        public $status = 'approved'
-
+        public User $performedBy ,
+        public $status = 'approved',
     )
     {
         //

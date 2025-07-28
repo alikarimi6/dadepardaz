@@ -11,7 +11,6 @@ use Spatie\Permission\Models\Role;
 
 class PaymentStatusTransition extends Model
 {
-    use HasStates;
     protected $table = 'payment_status_transitions';
     protected $fillable = [
         'payment_log_id' ,
@@ -39,6 +38,6 @@ class PaymentStatusTransition extends Model
 
     public function role(): HasOne
     {
-        return $this->hasOne(Role::class);
+        return $this->hasOne(Role::class , 'role' , 'name');
     }
 }

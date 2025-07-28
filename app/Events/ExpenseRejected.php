@@ -19,8 +19,14 @@ class ExpenseRejected
     /**
      * Create a new event instance.
      */
-    public function __construct(public User $user , public Expense $expense  ,
-        public $rejection_comment, public $status = 'rejected')
+    public function __construct(
+        public User $user ,
+        public Expense $expense  ,
+        public $rejection_comment,
+//        todo : status => state
+        public $status = 'rejected' ,
+        public User $performedBy
+    )
     {
 
     }

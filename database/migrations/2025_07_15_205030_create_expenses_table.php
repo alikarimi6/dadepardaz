@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users');
             $table->foreignId('category_id')->constrained('expense_categories');
             $table->decimal('amount', 12, 2);
-            $table->enum('status' , ['pending' , 'approved' , 'rejected'])->default('pending');
+            $table->string('state')->default('requested');
             $table->string('rejection_comment')->nullable();
             $table->string('iban');
             $table->string('description')->nullable();
