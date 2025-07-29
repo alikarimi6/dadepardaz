@@ -7,6 +7,7 @@ use App\Http\Middleware\Expense\CheckOwner;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Spatie\Permission\Models\Role;
 
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
@@ -27,8 +28,10 @@ Route::prefix('v1')->group(function (){
 //    add acl or policy to expenses
 //    define owner & supervisor routes
 //    admin routes
-    Route::get('owner/expenses', function (){
-        return response()->json(['expenses' => \App\Models\Expense::query()->where(['state' => \App\States\Payment\VerifiedBySupervisor::$name])->get()]);
+    Route::middleware(['auth:sanctum' , 'role:supervisor|owner'])->prefix('owner')
+        ->name('owner.')->group(function (){
+
+        Route::get('expenses' ,[ExpenseController::class , 'getVerifiedBySupervisorExpenses'] )->name('expenses');
     });
 
 //    supervisor routes
@@ -49,7 +52,7 @@ Route::prefix('v1')->group(function (){
         });
 });
 Route::get('token' , function (){
-    $user = User::query()->find(1);
+    $user = User::query()->find(2);
     return response()->json(['key' => $user->createToken('test' )->plainTextToken] , 200);
 });
 

@@ -9,5 +9,4 @@ class VerifiedBySupervisor extends PaymentStatus
 
     public static $name = 'verified_by_supervisor';
 
-
 }

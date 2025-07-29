@@ -23,12 +23,11 @@ class ExpenseRejected
         public User $user ,
         public Expense $expense  ,
         public $rejection_comment,
-//        todo : status => state
         public $status = 'rejected' ,
-        public User $performedBy
+        public $performedBy = null
     )
     {
-
+        $this->performedBy = \auth()->user();
     }
 
     /**

@@ -11,6 +11,7 @@ use App\Http\Requests\Expense\StoreExpenseRequest;
 use App\Http\Resources\Api\V1\ExpenseResource;
 use App\Models\Expense;
 use App\Models\User;
+use App\States\Payment\VerifiedBySupervisor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
@@ -59,10 +60,9 @@ class ExpenseController extends Controller
     }
     public function approve(ApproveRequest $request ,Expense $expense): JsonResponse
     {
-        $user = auth()->user();
-        event(new ExpenseApproved($expense->user()->first() , $expense , $request->payment_method ,
-        auth()->user()
-        ));
+        event(new ExpenseApproved(
+            $expense->user()->first() , $expense , $request->payment_method )
+        );
 
         return response()->json([
             'message' => 'expense approved',
@@ -87,7 +87,9 @@ class ExpenseController extends Controller
         foreach ($request->ids as $id) {
             $expense = Expense::find($id);
             if (!$expense) continue;
-            event(new ExpenseApproved($expense->user()->first() ,$expense  ,$request->payment_method ));
+            event(new ExpenseApproved(
+                $expense->user()->first() , $expense  ,$request->payment_method )
+            );
         }
 
         return response()->json(['message' => 'bulk approve done']);
@@ -103,7 +105,9 @@ class ExpenseController extends Controller
             $expense->status = 'rejected';
             $expense->save();
 
-            event(new ExpenseRejected($expense->user()->first(), $expense , $request->rejection_comment));
+            event(new ExpenseRejected(
+                $expense->user()->first(), $expense , $request->rejection_comment , '' , '')
+            );
         }
 
         return response()->json(['message' => 'bulk rejection done']);
@@ -133,6 +137,15 @@ class ExpenseController extends Controller
         $expense->delete();
 
         return response()->json(['message' => 'destroyed successfully'], 200);
+    }
+
+    public function getVerifiedBySupervisorExpenses(): JsonResponse
+    {
+        $verifiedExpenses = Expense::query()
+            ->where('state', VerifiedBySupervisor::$name)
+            ->get();
+
+        return response()->json(ExpenseResource::collection($verifiedExpenses));
     }
 
 //
