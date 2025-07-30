@@ -11,6 +11,9 @@ use App\Http\Requests\Expense\StoreExpenseRequest;
 use App\Http\Resources\Api\V1\ExpenseResource;
 use App\Models\Expense;
 use App\Models\User;
+use App\Services\Expense\ExpenseStateService;
+use App\States\Payment\Requested;
+use App\States\Payment\VerifiedByOwner;
 use App\States\Payment\VerifiedBySupervisor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -60,57 +63,66 @@ class ExpenseController extends Controller
     }
     public function approve(ApproveRequest $request ,Expense $expense): JsonResponse
     {
-        event(new ExpenseApproved(
-            $expense->user()->first() , $expense , $request->payment_method )
-        );
-
-        return response()->json([
-            'message' => 'expense approved',
-            'expense' => ExpenseResource::make($expense),]);
+//        check role
+//        if owner and state is not approved by admin don't show
+//        if supervisor and state is requested show
+/*        if(auth()->user()->hasRole('owner') && $expense->state == VerifiedByOwner::$name){
+            event(new ExpenseApproved(
+                    $expense->user()->first() , $expense , $request->payment_method )
+            );
+            return response()->json([
+                'message' => 'expense approved',
+                'expense' => ExpenseResource::make($expense),]);
+        }
+        if (auth()->user()->hasRole('supervisor') && $expense->state == Requested::$name){
+            event(new ExpenseApproved(
+                    $expense->user()->first() , $expense , $request->payment_method )
+            );
+            return response()->json([
+                'message' => 'expense approved',
+                'expense' => ExpenseResource::make($expense),]);
+        }*/
+        $expenseStateService = new ExpenseStateService();
+        return $expenseStateService->tryApproveExpense(auth()->user(), $expense , $request->payment_method);
     }
 
     public function reject(RejectRequest $request, Expense $expense): JsonResponse
     {
         $data = $request->validated();
+        $expenseStateService = new ExpenseStateService();
 
-        event(new ExpenseRejected( $expense->user()->first() , $expense
-            , $data['rejection_comment']));
+        $response = $expenseStateService->tryRejectExpense(
+            auth()->user(), $expense, $data['rejection_comment']);
 
-        return response()->json([
-            'message' => 'expense rejected' ,
-            'expense' => ExpenseResource::make($expense),
-        ]);
+
+        return $response;
     }
 
     public function bulkApprove(ApproveRequest $request): JsonResponse
     {
+        $expenseStateService = new ExpenseStateService();
+
         foreach ($request->ids as $id) {
             $expense = Expense::find($id);
             if (!$expense) continue;
-            event(new ExpenseApproved(
-                $expense->user()->first() , $expense  ,$request->payment_method )
-            );
+            $response = $expenseStateService->tryApproveExpense(auth()->user(), $expense, $request->payment_method);
         }
-
-        return response()->json(['message' => 'bulk approve done']);
+        return $response ?? response()->json(['not found' , 404]);
     }
 
 
     public function bulkReject(Request $request): JsonResponse
     {
+        $expenseStateService = new ExpenseStateService();
         foreach ($request->ids as $id) {
             $expense = Expense::find($id);
             if (!$expense) continue;
 
-            $expense->status = 'rejected';
-            $expense->save();
-
-            event(new ExpenseRejected(
-                $expense->user()->first(), $expense , $request->rejection_comment , '' , '')
-            );
+            $response = $expenseStateService->tryRejectExpense(
+                auth()->user(), $expense, $request->rejection_comment);
         }
 
-        return response()->json(['message' => 'bulk rejection done']);
+        return $response ?? response()->json(['not found' , 404]);
     }
     /**
      * Display the specified resource.

@@ -7,7 +7,6 @@ use App\Http\Middleware\Expense\CheckOwner;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Spatie\Permission\Models\Role;
 
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
@@ -25,9 +24,6 @@ Route::prefix('v1')->group(function (){
     });
     Route::apiResource('expenses' , ExpenseController::class )->only(['show' , 'destroy'])->middleware(['auth:sanctum' , CheckOwner::class]);
 
-//    add acl or policy to expenses
-//    define owner & supervisor routes
-//    admin routes
     Route::middleware(['auth:sanctum' , 'role:supervisor|owner'])->prefix('owner')
         ->name('owner.')->group(function (){
 

@@ -26,9 +26,11 @@ class ExpenseFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => User::factory(),
             'category_id' => ExpenseCategory::query()->inRandomOrder()->first()->id,
             'amount' => fake()->numberBetween(10000, 1000000) ,
             'state' => Requested::$name,
+            'iban' => $this->faker->iban(),
             'rejection_comment' => null,
             'description' =>  fake()->optional(0.5)->sentence,
             'paid_at' => null,

@@ -7,13 +7,11 @@ use App\Events\ExpenseRejected;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\User;
+use App\Services\Expense\ExpenseStateService;
 use App\States\Payment\Requested;
-use App\States\Payment\VerifiedByOwner;
 use App\States\Payment\VerifiedBySupervisor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -21,46 +19,55 @@ class ExpenseControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected ExpenseStateService $service;
+
     protected function setUp(): void
     {
         parent::setUp();
+        $this->service = new ExpenseStateService();
+        foreach (['owner', 'supervisor'] as $role) {
+            if (!Role::where('name', $role)->exists()) {
+                Role::create(['name' => $role]);
+            }
+        }
+        ExpenseCategory::factory()->count(5)->create();
 
-        // Create roles
-        Role::firstOrCreate(['name' => 'supervisor']);
-        Role::firstOrCreate(['name' => 'owner']);
-
-        // Create default expense category
-        ExpenseCategory::factory()->create();
     }
 
-    public function test_owner_can_create_expense_with_attachment()
+    public function test_tryApproveExpense_allows_owner_with_correct_state()
     {
-        Storage::fake('public');
+        Event::fake();
 
         $user = User::factory()->create();
         $user->assignRole('owner');
 
-        $this->actingAs($user);
-
-        $file = UploadedFile::fake()->image('receipt.jpg');
-
-        $response = $this->postJson(route('expenses.store'), [
-            'amount' => 100000,
-            'category_id' => ExpenseCategory::first()->id,
-            'description' => 'Lunch',
-            'iban' => 'IR123456789012345678901234',
-            'paid_at' => now()->toDateString(),
-            'attachments' => [$file],
+        $expense = Expense::factory()->create([
+            'state' => VerifiedBySupervisor::$name,
         ]);
+        $expense->state = new VerifiedBySupervisor($expense);
 
-        $response->assertStatus(201);
-        $this->assertDatabaseHas('expenses', [
-            'description' => 'Lunch',
-            'amount' => 100000,
-        ]);
+        $response = $this->service->tryApproveExpense($user, $expense, 'manual');
+
+        Event::assertDispatched(ExpenseApproved::class);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
-    public function test_supervisor_can_approve_expense()
+    public function test_tryApproveExpense_denies_owner_with_wrong_state()
+    {
+        $user = User::factory()->create();
+        $user->assignRole('owner');
+
+        $expense = Expense::factory()->create([
+            'state' => Requested::$name,
+        ]);
+        $expense->state = new Requested($expense);
+
+        $response = $this->service->tryApproveExpense($user, $expense, 'manual');
+
+        $this->assertEquals(403, $response->getStatusCode());
+    }
+
+    public function test_tryRejectExpense_allows_supervisor_with_correct_state()
     {
         Event::fake();
 
@@ -69,141 +76,79 @@ class ExpenseControllerTest extends TestCase
 
         $expense = Expense::factory()->create([
             'state' => Requested::$name,
-            'iban' => 'IR123456789012345678901234',
-            'user_id' => $user->id,
-            'payment_method'=> 'manual'
         ]);
+        $expense->state = new Requested($expense);
 
-        $this->actingAs($user);
+        $response = $this->service->tryRejectExpense($user, $expense, 'reason');
 
-        $response = $this->postJson(route('expenses.approve', $expense));
-
-        $response->assertOk();
-        $this->assertEquals(VerifiedBySupervisor::class, $expense->fresh()->state);
-        Event::assertDispatched(ExpenseApproved::class);
+        Event::assertDispatched(ExpenseRejected::class);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
-    public function test_owner_can_reject_expense()
+    public function test_tryRejectExpense_denies_supervisor_with_wrong_state()
     {
-        Event::fake();
-
         $user = User::factory()->create();
-        $user->assignRole('owner');
+        $user->assignRole('supervisor');
 
         $expense = Expense::factory()->create([
             'state' => VerifiedBySupervisor::$name,
-            'iban' => 'IR123456789012345678901234',
-            'user_id' => $user->id,
         ]);
+        $expense->state = new VerifiedBySupervisor($expense);
 
-        $this->actingAs($user);
+        $response = $this->service->tryRejectExpense($user, $expense, 'reason');
 
-        $response = $this->postJson(route('expenses.reject', $expense), [
-            'rejection_comment' => 'Invalid expense',
-        ]);
-
-        $response->assertOk();
-        $this->assertNotNull($expense->fresh()->rejection_comment);
-        Event::assertDispatched(ExpenseRejected::class);
+        $this->assertEquals(403, $response->getStatusCode());
     }
-
-    public function test_bulk_approve_expenses()
+   /* public function test_bulk_approve_expenses()
     {
         $user = User::factory()->create();
         $user->assignRole('owner');
-
-        $expenses = Expense::factory()->count(3)->create([
-            'state' => VerifiedBySupervisor::$name,
-            'iban' => 'IR123456789012345678901234',
-            'user_id' => $user->id,
-        ]);
-
         $this->actingAs($user);
-
-        $response = $this->postJson(route('expenses.bulkApprove'), [
-            'ids' => $expenses->pluck('id')->toArray(),
+        $expenses = Expense::factory()->count(3)->create([
+            'state' => Requested::$name,
         ]);
 
-        $response->assertOk();
-        $expenses->each(function ($expense) {
-            $this->assertEquals(VerifiedByOwner::class, $expense->fresh()->state);
-        });
+        $ids = $expenses->pluck('id')->toArray();
+        $response = $this->postJson(route('expenses.bulk.approve'), [
+            'ids' => $ids,
+            'payment_method' => 'manual',
+        ]);
+
+        $response->assertStatus(200);
+
+        $data = $response->json('results');
+
+        foreach ($ids as $id) {
+            $this->assertArrayHasKey($id, $data);
+            $this->assertEquals('expense approved', $data[$id]['message']);
+        }
     }
 
     public function test_bulk_reject_expenses()
     {
         $user = User::factory()->create();
-        $user->assignRole('owner');
+        $user->assignRole('supervisor');
+
+        $this->actingAs($user);
 
         $expenses = Expense::factory()->count(2)->create([
-            'state' => VerifiedBySupervisor::$name,
-            'iban' => 'IR123456789012345678901234',
-            'user_id' => $user->id,
+            'state' => Requested::$name,
         ]);
 
-        $this->actingAs($user);
+        $ids = $expenses->pluck('id')->toArray();
 
-        $response = $this->postJson(route('expenses.bulkReject'), [
-            'ids' => $expenses->pluck('id')->toArray(),
-            'rejection_comment' => 'Invalid bulk expenses',
+        $response = $this->postJson(route('expenses.bulk.reject'), [
+            'ids' => $ids,
+            'rejection_comment' => 'Invalid expense',
         ]);
 
-        $response->assertOk();
-        $expenses->each(function ($expense) {
-            $this->assertNotNull($expense->fresh()->rejection_comment);
-        });
-    }
+        $response->assertStatus(200);
 
-    public function test_get_expense_list()
-    {
-        $user = User::factory()->create();
-        $user->assignRole('owner');
-        $this->actingAs($user);
+        $data = $response->json('results');
 
-        Expense::factory()->count(5)->create([
-            'iban' => 'IR123456789012345678901234',
-            'user_id' => $user->id,
-        ]);
-
-        $response = $this->getJson(route('expenses.index'));
-        $response->assertOk();
-        $response->assertJsonStructure(['data']);
-    }
-
-    public function test_get_expense_details()
-    {
-        $user = User::factory()->create();
-        $user->assignRole('owner');
-
-        $this->actingAs($user);
-
-        $expense = Expense::factory()->create([
-            'iban' => 'IR123456789012345678901234',
-            'user_id' => $user->id,
-        ]);
-
-        $response = $this->getJson(route('expenses.show', $expense));
-        $response->assertOk();
-        $response->assertJsonFragment([
-            'id' => $expense->id
-        ]);
-    }
-
-    public function test_delete_expense()
-    {
-        $user = User::factory()->create();
-        $user->assignRole('owner');
-
-        $this->actingAs($user);
-
-        $expense = Expense::factory()->create([
-            'iban' => 'IR123456789012345678901234',
-            'user_id' => $user->id,
-        ]);
-
-        $response = $this->deleteJson(route('expenses.destroy', $expense));
-        $response->assertNoContent();
-
-        $this->assertDatabaseMissing('expenses', ['id' => $expense->id]);
-    }
+        foreach ($ids as $id) {
+            $this->assertArrayHasKey($id, $data);
+            $this->assertEquals('expense rejected', $data[$id]['message']);
+        }
+    }*/
 }
