@@ -48,7 +48,7 @@ Route::prefix('v1')->group(function (){
         });
 });
 Route::get('token' , function (){
-    $user = User::query()->find(2);
+    $user = User::query()->find(1);
     return response()->json(['key' => $user->createToken('test' )->plainTextToken] , 200);
 });
 

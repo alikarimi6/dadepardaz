@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payment_status_transitions', function (Blueprint $table) {
+        Schema::create('expense_status_transitions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('payment_id')->constrained('payment_logs')->onDelete('cascade');
+            $table->foreignId('expense_id')->constrained('expenses')->onDelete('cascade');
             $table->string('from_status')->nullable();
             $table->string('to_status');
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();

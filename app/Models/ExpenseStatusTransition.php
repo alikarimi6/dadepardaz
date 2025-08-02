@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\ModelStates\HasStates;
 use Spatie\Permission\Models\Role;
 
-class PaymentStatusTransition extends Model
+class ExpenseStatusTransition extends Model
 {
-    protected $table = 'payment_status_transitions';
+    protected $table = 'expense_status_transitions';
     protected $fillable = [
-        'payment_log_id' ,
+        'expense_id' ,
         'from_status' ,
         'to_status' ,
         'user_id',
@@ -25,15 +25,9 @@ class PaymentStatusTransition extends Model
     {
         return $this->belongsTo(User::class);
     }
-
-    public function paymentLog(): BelongsTo
+    public function expense(): BelongsTo
     {
-        return $this->belongsTo(ExpensePaymentLog::class , 'payment_log_id');
-    }
-
-    public function expense()
-    {
-//        return $this->belongsToThrough(Expense::class);
+        return $this->belongsTo(Expense::class);
     }
 
     public function role(): HasOne

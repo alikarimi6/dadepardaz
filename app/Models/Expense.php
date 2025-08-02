@@ -6,6 +6,7 @@ use App\States\Payment\PaymentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Spatie\ModelStates\HasStates;
@@ -48,13 +49,9 @@ class Expense extends Model
         return $this->hasOne(ExpensePaymentLog::class);
     }
 
-    public function paymentStatus(): HasOneThrough
+    public function expenseStatusLog(): HasMany
     {
-        return $this->HasOneThrough(
-            PaymentStatusTransition::class,
-            ExpensePaymentLog::class ,
-            'expense_id',
-            'payment_id',
-        );
+        return $this->hasMany(ExpenseStatusTransition::class);
     }
+
 }

@@ -3,11 +3,8 @@
 namespace App\Models;
 
 
-use App\States\Payment\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Spatie\ModelStates\HasStates;
 
 class ExpensePaymentLog extends Model
 {
@@ -28,10 +25,5 @@ class ExpensePaymentLog extends Model
     public function bank()
     {
         return $this->belongsTo(Bank::class);
-    }
-
-    public function paymentStatusTransition(): HasOne
-    {
-        return $this->hasOne(PaymentStatusTransition::class , 'payment_id');
     }
 }
