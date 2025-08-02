@@ -6,17 +6,16 @@ use App\Events\ExpenseApproved;
 use App\Events\ExpenseRejected;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Expense\ApproveRequest;
+use App\Http\Requests\Expense\BulkApproveRequest;
+use App\Http\Requests\Expense\BulkRejectRequest;
 use App\Http\Requests\Expense\RejectRequest;
 use App\Http\Requests\Expense\StoreExpenseRequest;
 use App\Http\Resources\Api\V1\ExpenseResource;
 use App\Models\Expense;
 use App\Models\User;
 use App\Services\Expense\ExpenseStateService;
-use App\States\Payment\Requested;
-use App\States\Payment\VerifiedByOwner;
 use App\States\Payment\VerifiedBySupervisor;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 
@@ -61,68 +60,57 @@ class ExpenseController extends Controller
             'file_path' => $path
         ]);
     }
-    public function approve(ApproveRequest $request ,Expense $expense): JsonResponse
-    {
-//        check role
-//        if owner and state is not approved by admin don't show
-//        if supervisor and state is requested show
-/*        if(auth()->user()->hasRole('owner') && $expense->state == VerifiedByOwner::$name){
-            event(new ExpenseApproved(
-                    $expense->user()->first() , $expense , $request->payment_method )
-            );
-            return response()->json([
-                'message' => 'expense approved',
-                'expense' => ExpenseResource::make($expense),]);
-        }
-        if (auth()->user()->hasRole('supervisor') && $expense->state == Requested::$name){
-            event(new ExpenseApproved(
-                    $expense->user()->first() , $expense , $request->payment_method )
-            );
-            return response()->json([
-                'message' => 'expense approved',
-                'expense' => ExpenseResource::make($expense),]);
-        }*/
-        $expenseStateService = new ExpenseStateService();
-        return $expenseStateService->tryApproveExpense(auth()->user(), $expense , $request->payment_method);
-    }
-
-    public function reject(RejectRequest $request, Expense $expense): JsonResponse
+    public function approve(ApproveRequest $request ,Expense $expense , $status = 'approved'): JsonResponse
     {
         $data = $request->validated();
-        $expenseStateService = new ExpenseStateService();
-
-        $response = $expenseStateService->tryRejectExpense(
-            auth()->user(), $expense, $data['rejection_comment']);
-
-
-        return $response;
+        if (!ExpenseStateService::checkPermission($expense , $status)) {
+            return response()->json(['message' => 'not allowed'  ,ExpenseResource::make($expense)] , 403);
+        }
+        event(new ExpenseApproved($expense , $data['payment_method']));
+        return response()->json(['message' => 'expense approved' , ExpenseResource::make($expense)] , 200);
     }
 
-    public function bulkApprove(ApproveRequest $request): JsonResponse
+    public function reject(RejectRequest $request, Expense $expense , $status = 'rejected'): JsonResponse
     {
-        $expenseStateService = new ExpenseStateService();
+        $data = $request->validated();
+        if (!ExpenseStateService::checkPermission($expense , $status))
+            return response()->json(['message' => 'you are not allowed' ,ExpenseResource::make($expense)] , 403);
+        event(new ExpenseRejected($expense, $data['rejection_comment']));
+        return response()->json(['message' => 'expense rejected' , ExpenseResource::make($expense)] , 200);
+    }
 
-        foreach ($request->ids as $id) {
+    public function bulkApprove(BulkApproveRequest $request , $status='approved'): JsonResponse
+    {
+        $data = $request->validated();
+        foreach ($data['ids'] as $id) {
             $expense = Expense::find($id);
-            if (!$expense) continue;
-            $response = $expenseStateService->tryApproveExpense(auth()->user(), $expense, $request->payment_method);
+            if (!$expense) {
+                return response()->json([$expense => 'not found' ], 404);
+            }
+            if (!ExpenseStateService::checkPermission($expense ,$status )) {
+                return response()->json(['message' => 'not allowed'  ,ExpenseResource::make($expense)] , 403);
+            }
+            event(new ExpenseApproved($expense, $data['payment_method']));
         }
-        return $response ?? response()->json(['not found' , 404]);
+        return response()->json(['message' => 'expenses approved' , ExpenseResource::make($expense)] , 200);
     }
 
 
-    public function bulkReject(Request $request): JsonResponse
+    public function bulkReject(BulkRejectRequest $request, $status = 'rejected'): JsonResponse
     {
-        $expenseStateService = new ExpenseStateService();
-        foreach ($request->ids as $id) {
+        $data = $request->validated();
+        foreach ($data['ids'] as $id) {
             $expense = Expense::find($id);
-            if (!$expense) continue;
-
-            $response = $expenseStateService->tryRejectExpense(
-                auth()->user(), $expense, $request->rejection_comment);
+            if (!$expense) {
+                return response()->json([$expense => 'not found' ], 404);
+            }
+            if (!ExpenseStateService::checkPermission($expense ,$status)) {
+                return response()->json(['message' => 'not allowed'  ,ExpenseResource::make($expense)] , 403);
+            }
+            event(new ExpenseRejected($expense, $data['rejection_comment']));
         }
 
-        return $response ?? response()->json(['not found' , 404]);
+        return response()->json(['message' => 'expenses rejected' , ExpenseResource::make($expense)] , 200);
     }
     /**
      * Display the specified resource.

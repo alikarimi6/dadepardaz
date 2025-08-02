@@ -45,15 +45,19 @@ class ExpenseControllerTest extends TestCase
             'state' => VerifiedBySupervisor::$name,
         ]);
         $expense->state = new VerifiedBySupervisor($expense);
-
-        $response = $this->service->tryApproveExpense($user, $expense, 'manual');
-
+        $response = $this->actingAs($user)
+            ->postJson(route('expenses.approve', [
+                'expense' => $expense->id ,
+                'payment_method' => 'manual',
+                ]))
+            ->assertOk();
         Event::assertDispatched(ExpenseApproved::class);
         $this->assertEquals(200, $response->getStatusCode());
     }
 
     public function test_tryApproveExpense_denies_owner_with_wrong_state()
     {
+        Event::fake();
         $user = User::factory()->create();
         $user->assignRole('owner');
 
@@ -61,8 +65,13 @@ class ExpenseControllerTest extends TestCase
             'state' => Requested::$name,
         ]);
         $expense->state = new Requested($expense);
-
-        $response = $this->service->tryApproveExpense($user, $expense, 'manual');
+        $response = $this->actingAs($user)
+            ->postJson(route('expenses.approve', [
+                'expense' => $expense->id ,
+                'payment_method' => 'manual',
+            ]))
+            ->assertForbidden();
+        Event::assertNotDispatched(ExpenseApproved::class);
 
         $this->assertEquals(403, $response->getStatusCode());
     }
@@ -79,7 +88,12 @@ class ExpenseControllerTest extends TestCase
         ]);
         $expense->state = new Requested($expense);
 
-        $response = $this->service->tryRejectExpense($user, $expense, 'reason');
+        $response = $this->actingAs($user)
+            ->postJson(route('expenses.reject', [
+                'expense' => $expense->id ,
+                'rejection_comment' => 'test_test',
+            ]))
+            ->assertOk();
 
         Event::assertDispatched(ExpenseRejected::class);
         $this->assertEquals(200, $response->getStatusCode());
@@ -87,6 +101,7 @@ class ExpenseControllerTest extends TestCase
 
     public function test_tryRejectExpense_denies_supervisor_with_wrong_state()
     {
+        Event::fake();
         $user = User::factory()->create();
         $user->assignRole('supervisor');
 
@@ -94,61 +109,139 @@ class ExpenseControllerTest extends TestCase
             'state' => VerifiedBySupervisor::$name,
         ]);
         $expense->state = new VerifiedBySupervisor($expense);
-
-        $response = $this->service->tryRejectExpense($user, $expense, 'reason');
-
+        $response = $this->actingAs($user)
+            ->postJson(route('expenses.reject', [
+                'expense' => $expense->id ,
+                'rejection_comment' => 'test_test',
+            ]));
+        Event::assertNotDispatched(ExpenseRejected::class);
         $this->assertEquals(403, $response->getStatusCode());
     }
-   /* public function test_bulk_approve_expenses()
+    public function test_bulk_approve_expenses()
     {
-        $user = User::factory()->create();
-        $user->assignRole('owner');
-        $this->actingAs($user);
-        $expenses = Expense::factory()->count(3)->create([
-            'state' => Requested::$name,
-        ]);
+        Event::fake();
 
-        $ids = $expenses->pluck('id')->toArray();
-        $response = $this->postJson(route('expenses.bulk.approve'), [
-            'ids' => $ids,
-            'payment_method' => 'manual',
-        ]);
-
-        $response->assertStatus(200);
-
-        $data = $response->json('results');
-
-        foreach ($ids as $id) {
-            $this->assertArrayHasKey($id, $data);
-            $this->assertEquals('expense approved', $data[$id]['message']);
-        }
-    }
-
-    public function test_bulk_reject_expenses()
-    {
         $user = User::factory()->create();
         $user->assignRole('supervisor');
-
-        $this->actingAs($user);
 
         $expenses = Expense::factory()->count(2)->create([
             'state' => Requested::$name,
         ]);
 
-        $ids = $expenses->pluck('id')->toArray();
+        $this->actingAs($user)
+            ->postJson(route('expenses.bulk.approve'), [
+                'ids' => $expenses->pluck('id')->toArray(),
+                'payment_method' => 'manual',
+            ])
+            ->assertOk();
 
-        $response = $this->postJson(route('expenses.bulk.reject'), [
-            'ids' => $ids,
-            'rejection_comment' => 'Invalid expense',
+        Event::assertDispatchedTimes(ExpenseApproved::class, 2);
+
+        foreach ($expenses as $expense) {
+            Event::assertDispatched(ExpenseApproved::class, function ($event) use ($expense) {
+                return $event->expense->id === $expense->id;
+            });
+        }
+    }
+    public function test_bulk_approve_returns_404_if_expense_not_found()
+    {
+        Event::fake();
+
+        $user = User::factory()->create();
+        $user->assignRole('owner');
+
+        $this->actingAs($user)
+            ->postJson(route('expenses.bulk.approve'), [
+                'ids' => [999999],
+                'payment_method' => 'scheduled',
+            ])
+            ->assertStatus(404);
+        Event::assertNotDispatched(ExpenseApproved::class);
+    }
+
+
+
+    public function test_bulk_reject_expenses()
+    {
+        Event::fake();
+
+        $user = User::factory()->create();
+        $user->assignRole('supervisor');
+
+        $expenses = Expense::factory()->count(2)->create([
+            'state' => Requested::$name,
         ]);
 
-        $response->assertStatus(200);
+        $this->actingAs($user)
+            ->postJson(route('expenses.bulk.reject'), [
+                'ids' => $expenses->pluck('id')->toArray(),
+                'rejection_comment' => 'rejected',
+            ])
+            ->assertOk();
 
-        $data = $response->json('results');
+        Event::assertDispatchedTimes(ExpenseRejected::class, 2);
 
-        foreach ($ids as $id) {
-            $this->assertArrayHasKey($id, $data);
-            $this->assertEquals('expense rejected', $data[$id]['message']);
+        foreach ($expenses as $expense) {
+            Event::assertDispatched(ExpenseRejected::class, function ($event) use ($expense) {
+                return $event->expense->id === $expense->id;
+            });
         }
-    }*/
+    }
+    public function test_bulk_reject_returns_404_if_expense_not_found()
+    {
+        Event::fake();
+
+        $user = User::factory()->create();
+        $user->assignRole('owner');
+
+        $this->actingAs($user)
+            ->postJson(route('expenses.bulk.reject'), [
+                'ids' => [999999],
+                'rejection_comment' => 'scheduled',
+            ])
+            ->assertStatus(404);
+        Event::assertNotDispatched(ExpenseRejected::class);
+    }
+
+    public function test_bulk_approve_denies_owner_wrong_state()
+    {
+        Event::fake();
+
+        $user = User::factory()->create();
+        $user->assignRole('owner');
+
+        $expenses = Expense::factory()->count(2)->create([
+            'state' => Requested::$name,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('expenses.bulk.approve'), [
+                'ids' => $expenses->pluck('id')->toArray(),
+                'payment_method' => 'manual',
+            ])
+            ->assertForbidden();
+
+        Event::assertNotDispatched(ExpenseApproved::class);
+    }
+
+    public function test_bulk_reject_denies_owner_wrong_state()
+    {
+        Event::fake();
+
+        $user = User::factory()->create();
+        $user->assignRole('owner');
+
+        $expenses = Expense::factory()->count(2)->create([
+            'state' => Requested::$name,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('expenses.bulk.reject'), [
+                'ids' => $expenses->pluck('id')->toArray(),
+                'rejection_comment' => 'test',
+            ])
+            ->assertForbidden();
+
+        Event::assertNotDispatched(ExpenseRejected::class);
+    }
 }

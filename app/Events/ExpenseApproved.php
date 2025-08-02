@@ -23,7 +23,6 @@ class ExpenseApproved
      * Create a new event instance.
      */
     public function __construct(
-        public User $user ,
         public Expense $expense ,
         public $paymentMethod,
         public $status = 'approved',

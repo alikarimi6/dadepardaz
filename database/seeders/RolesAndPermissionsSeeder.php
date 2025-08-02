@@ -17,6 +17,7 @@ class RolesAndPermissionsSeeder extends Seeder
     public function run(): void
 
     {
+//        todo: ref role/permission factory and get them from configs
         $permissions = [
             'approve by supervisor',
             'reject by supervisor',

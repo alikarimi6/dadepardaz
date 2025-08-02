@@ -12,7 +12,7 @@ class RejectExpenseListener
     /**
      * Create the event listener.
      */
-    public function __construct(private ExpenseStateService $expenseStateService)
+    public function __construct()
     {
         //
     }
@@ -22,11 +22,8 @@ class RejectExpenseListener
      */
     public function handle(ExpenseRejected $event): void
     {
-        $this->expenseStateService->transition(
-            expense: $event->expense,
-            performedBy: $event->performedBy,
-            action: $event->status ,
-            comment: $event->rejection_comment
-        );
+        $event->expense->update([
+            'rejection_comment' => $event->rejection_comment,
+        ]);
     }
 }

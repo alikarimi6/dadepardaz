@@ -1,11 +1,10 @@
 <?php
 
 namespace App\States\Payment;
-
 use Spatie\ModelStates\State;
 use Spatie\ModelStates\StateConfig;
 
-class PaymentStatus extends State
+abstract class PaymentStatus extends State
 {
 
     public static function config(): StateConfig

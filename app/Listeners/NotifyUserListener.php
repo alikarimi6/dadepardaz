@@ -24,6 +24,6 @@ class NotifyUserListener
     public function handle(ExpenseApproved | ExpenseRejected $event)
     {
         logger("email queued , user: $event->expense->user");
-        $event->user->notify(new ExpenseStatusNotification($event->status , $event->expense));
+        $event->expense->user->notify(new ExpenseStatusNotification($event->status , $event->expense));
     }
 }

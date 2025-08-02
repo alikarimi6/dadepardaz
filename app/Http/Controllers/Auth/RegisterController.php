@@ -19,7 +19,6 @@ class RegisterController extends Controller
     {
         try {
             $client = new Client();
-//            todo: resolve api server
             $response = $client->post('http://localhost:8001/api/v1/auth/register', [
                 'form_params' => $request->all(),
                 'headers' => [
