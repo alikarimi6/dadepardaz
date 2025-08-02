@@ -76,5 +76,6 @@ return [
     'links' => [
         public_path('storage') => storage_path('app/public'),
     ],
+    'custom_upload_disk' => env('UPLOAD_DISK', 'public'),
 
 ];

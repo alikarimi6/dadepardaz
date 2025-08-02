@@ -3,11 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -17,41 +15,21 @@ class RolesAndPermissionsSeeder extends Seeder
     public function run(): void
 
     {
-//        todo: ref role/permission factory and get them from configs
-        $permissions = [
-            'approve by supervisor',
-            'reject by supervisor',
-            'approve by owner',
-            'reject by owner',
-            'view payments',
-            'make payment',
-        ];
-
-        foreach ($permissions as $permission) {
+        foreach (config('roles.permissions') as $permission) {
             Permission::query()->firstOrCreate(['name' => $permission]);
         }
 
-        $supervisor = Role::query()->firstOrCreate(['name' => 'supervisor']);
-        $owner = Role::query()->firstOrCreate(['name' => 'owner']);
+        foreach (config('roles.roles') as $roleName => $permissions) {
+            $role = Role::query()->firstOrCreate(['name' => $roleName]);
+            $role->syncPermissions($permissions);
+        }
 
-        $supervisor->syncPermissions([
-            'approve by supervisor',
-            'reject by supervisor',
-            'view payments',
-        ]);
-
-        $owner->syncPermissions([
-            'approve by owner',
-            'reject by owner',
-            'make payment',
-            'view payments',
-        ]);
-
-        $admin1 = User::query()->find((2));
-        $admin1->assignRole('supervisor');
-
-        $admin2 = User::query()->find((1));
-        $admin2->assignRole('owner');
+        foreach (config('roles.users') as $userId => $roleName) {
+            $user = User::query()->find($userId);
+            if ($user) {
+                $user->assignRole($roleName);
+            }
+        }
     }
 
 }

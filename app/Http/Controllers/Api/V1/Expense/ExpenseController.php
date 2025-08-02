@@ -55,7 +55,7 @@ class ExpenseController extends Controller
     {
         $dir = Config::get('storage_paths.expense_attachments');
         $firstFile = is_array($file) ? $file[0] : $file;
-        $path = Storage::disk('public')->put($dir , $firstFile);
+        $path = Storage::disk(config('filesystem.custom_upload_disk'))->put($dir , $firstFile);
         $expense->attachment()->create([
             'file_path' => $path
         ]);

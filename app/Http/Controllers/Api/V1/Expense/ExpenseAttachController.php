@@ -9,11 +9,11 @@ class ExpenseAttachController extends Controller
 {
     public function download($filepath)
     {
-        if (!Storage::disk('public')->exists($filepath)) {
+        if (!Storage::disk(config('filesystem.custom_upload_disk'))->exists($filepath)) {
             abort(404);
         }
 
-        $file = Storage::disk('public')->path($filepath);
+        $file = Storage::disk(config('filesystem.custom_upload_disk'))->path($filepath);
 
         return response()->download($file);
     }
