@@ -1,4 +1,5 @@
 <?php
+//todo : let superadmin define state rules
 return [
     'owner' => [
         'approved' => \App\States\Payment\VerifiedByOwner::$name,

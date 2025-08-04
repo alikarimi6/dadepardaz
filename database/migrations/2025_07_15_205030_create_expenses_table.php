@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users');
             $table->foreignId('category_id')->constrained('expense_categories');
             $table->decimal('amount', 12, 2);
+//            todo : state to foreign id from states
             $table->string('state')->default('requested');
             $table->string('rejection_comment')->nullable();
             $table->string('iban');

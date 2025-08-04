@@ -1,30 +1,16 @@
 <?php
 return [
     'permissions' => [
-        'approve by supervisor',
-        'reject by supervisor',
-        'approve by owner',
-        'reject by owner',
-        'view payments',
-        'make payment',
+        'all-permissions',
     ],
 
     'roles' => [
-        'supervisor' => [
-            'approve by supervisor',
-            'reject by supervisor',
-            'view payments',
-        ],
-        'owner' => [
-            'approve by owner',
-            'reject by owner',
-            'make payment',
-            'view payments',
+        'superadmin' => [
+            'all-permissions',
         ],
     ],
 
     'users' => [
-        2 => 'supervisor',
-        1 => 'owner',
+        1 => 'superadmin',
     ],
 ];

@@ -10,11 +10,13 @@ use App\Http\Requests\Expense\BulkApproveRequest;
 use App\Http\Requests\Expense\BulkRejectRequest;
 use App\Http\Requests\Expense\RejectRequest;
 use App\Http\Requests\Expense\StoreExpenseRequest;
+use App\Http\Requests\Expense\UpdateStatusRequest;
 use App\Http\Resources\Api\V1\ExpenseResource;
 use App\Models\Expense;
 use App\Models\User;
 use App\Services\Expense\ExpenseStateService;
 use App\States\Payment\VerifiedBySupervisor;
+use http\Env\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
@@ -59,6 +61,17 @@ class ExpenseController extends Controller
         $expense->attachment()->create([
             'file_path' => $path
         ]);
+    }
+
+    public function updateStatus(UpdateStatusRequest $request, Expense $expense): JsonResponse
+    {
+        $data = $request->validated();
+        try {
+            ExpenseStateService::attemptTransition($expense, $data['action']);
+            return response()->json(['message' => 'updated successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage() , $e], 403);
+        }
     }
     public function approve(ApproveRequest $request ,Expense $expense , $status = 'approved'): JsonResponse
     {

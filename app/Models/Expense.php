@@ -24,11 +24,10 @@ class Expense extends Model
         'paid_at' ,
         'state' ,
     ];
-//    protected $states = [
-//        'state' => PaymentStatus::class,
-//    ];
-    protected $casts = [
+    protected $states = [
         'state' => PaymentStatus::class,
+    ];
+    protected $casts = [
     ];
     public function user() : BelongsTo
     {
@@ -52,6 +51,11 @@ class Expense extends Model
     public function expenseStatusLog(): HasMany
     {
         return $this->hasMany(ExpenseStatusTransition::class);
+    }
+
+    public function state(): BelongsTo
+    {
+        return $this->belongsTo(State::class);
     }
 
 }

@@ -35,10 +35,10 @@ class DatabaseSeeder extends Seeder
             ->create();
 
         User::factory()
-            ->count(10)
-            ->has(UserIban::factory()->count(2), 'ibans')
+            ->count(5)
+            ->has(UserIban::factory()->count(3), 'ibans')
             ->afterCreating(function (User $user) {
-                Expense::factory()->count(3)->create([
+                Expense::factory()->count(8)->create([
                     'user_id' => $user->id,
                     'iban' => $user->ibans->random()->code,
                 ]);

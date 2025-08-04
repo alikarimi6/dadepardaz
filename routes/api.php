@@ -3,6 +3,11 @@
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Expense\ExpenseCategoryController;
 use App\Http\Controllers\Api\V1\Expense\ExpenseController;
+use App\Http\Controllers\Api\V1\SuperAdmin\Role\PermissionController;
+use App\Http\Controllers\Api\V1\SuperAdmin\Role\RoleController;
+use App\Http\Controllers\Api\V1\SuperAdmin\StateController;
+use App\Http\Controllers\Api\V1\SuperAdmin\TransitionController;
+use App\Http\Controllers\Api\V1\SuperAdmin\TransitionRoleController;
 use App\Http\Middleware\Expense\CheckOwner;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -33,6 +38,7 @@ Route::prefix('v1')->group(function (){
 //    supervisor routes
     Route::prefix('expenses')
         ->name('expenses.')
+//        todo: define middleware coming from superadmin
         ->middleware('auth:sanctum')
         ->group(function () {
             Route::apiResource('', ExpenseController::class)->only(['index', 'store']);
@@ -46,10 +52,31 @@ Route::prefix('v1')->group(function (){
                 });
             });
         });
+//    superadmin routes:
+Route::prefix('superadmin')->middleware(['auth:sanctum' , 'role:superadmin'])->name('superadmin.')->group(function () {
+    Route::apiResource('roles', RoleController::class);
+    Route::resource('permissions', PermissionController::class);
+    Route::post('roles/{role}/permissions', [RoleController::class, 'assignPermissions'])->name('assign.permissions');
+    Route::post('users/{user}/roles', [RoleController::class, 'assignRoles'])->name('assign.roles');
+
+
+    Route::apiResource('states', StateController::class);
+    Route::apiResource('transitions', TransitionController::class);
+    Route::post('transitions/{transition}/roles', [TransitionRoleController::class, 'sync']);
+    Route::post('transition/{transition}/list',  [TransitionRoleController::class, 'list']);
+});
+
+// todo : define role/permission middleware dynamically
+Route::prefix('panel')->middleware(['auth:sanctum'])->name('panel.')->group(function () {
+    Route::post('update/{expense}' , [ExpenseController::class, 'updateStatus'])->name('update.status');
+});
+
 });
 Route::get('token' , function (){
-    $user = User::query()->find(1);
-    return response()->json(['key' => $user->createToken('test' )->plainTextToken] , 200);
+    $user = User::query()->find(4);
+    return response()->json(['key' => $user->createToken('test' )->plainTextToken ,
+        'roles' => $user->roles,
+        ] , 200);
 });
 
 Route::get('test' , function (){

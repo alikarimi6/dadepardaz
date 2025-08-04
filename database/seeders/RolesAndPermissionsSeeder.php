@@ -16,17 +16,18 @@ class RolesAndPermissionsSeeder extends Seeder
 
     {
         foreach (config('roles.permissions') as $permission) {
-            Permission::query()->firstOrCreate(['name' => $permission]);
+            Permission::query()->firstOrCreate(['name' => $permission , 'guard_name' => 'sanctum']);
         }
 
         foreach (config('roles.roles') as $roleName => $permissions) {
-            $role = Role::query()->firstOrCreate(['name' => $roleName]);
+            $role = Role::query()->firstOrCreate(['name' => $roleName , 'guard_name' => 'sanctum']);
             $role->syncPermissions($permissions);
         }
 
         foreach (config('roles.users') as $userId => $roleName) {
             $user = User::query()->find($userId);
             if ($user) {
+                $user->guard_name = 'sanctum';
                 $user->assignRole($roleName);
             }
         }
