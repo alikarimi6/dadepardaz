@@ -26,7 +26,6 @@ class ExpenseStateService
         return true;
 
     }
-//        todo : fire events if modirapproved/full-reject
 
     public static function attemptTransition(Expense $expense, $data): bool
     {
