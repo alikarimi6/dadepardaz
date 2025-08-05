@@ -6,7 +6,7 @@ use App\Models\ExpenseStatusTransition;
 
 class PaymentStatusLogger
 {
-    public static function log( $expenseId, $toStatus, $fromStatus , $role) : void {
+    public static function log( $expenseId, $toStatus, $fromStatus , $role , $comment =  null) : void {
         ExpenseStatusTransition::create([
             'expense_id' => $expenseId,
             'from_status' => $fromStatus,
@@ -14,6 +14,7 @@ class PaymentStatusLogger
             'user_id' => auth()->id(),
             'role' => $role ?? auth()->user()?->getRoleNames()->first(),
             'transitioned_at' => now(),
+            'comment' => $comment
         ]);
     }
 }

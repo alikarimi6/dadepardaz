@@ -21,7 +21,6 @@ class TransitionRoleController extends Controller
     }
     public function list(Transition $transition)
     {
-//        todo : show role name
         return response()->json($transition->roles);
     }
 

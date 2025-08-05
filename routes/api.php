@@ -73,7 +73,7 @@ Route::prefix('panel')->middleware(['auth:sanctum'])->name('panel.')->group(func
 
 });
 Route::get('token' , function (){
-    $user = User::query()->find(4);
+    $user = User::query()->find(3);
     return response()->json(['key' => $user->createToken('test' )->plainTextToken ,
         'roles' => $user->roles,
         ] , 200);

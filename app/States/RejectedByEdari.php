@@ -4,7 +4,7 @@
     use App\States\StateStatus;
     use Spatie\ModelStates\State;
 
-    class Requested extends StateStatus
+    class RejectedByEdari extends StateStatus
     {
-        public static  $name = "requested";
+        public static  $name = "rejected_by_edari";
     }

@@ -23,6 +23,7 @@ class UpdateStatusRequest extends FormRequest
     {
         return [
             'action' => ['required', 'in:approve,reject'],
+            'comment' => ['nullable', 'string'],
         ];
     }
 }

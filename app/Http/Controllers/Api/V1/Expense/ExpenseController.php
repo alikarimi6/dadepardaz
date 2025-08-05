@@ -67,7 +67,7 @@ class ExpenseController extends Controller
     {
         $data = $request->validated();
         try {
-            ExpenseStateService::attemptTransition($expense, $data['action']);
+            ExpenseStateService::attemptTransition($expense, $data['action'] , $data['comment']);
             return response()->json(['message' => 'updated successfully'], 200);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage() , $e], 403);

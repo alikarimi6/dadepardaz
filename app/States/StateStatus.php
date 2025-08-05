@@ -11,8 +11,6 @@ abstract class StateStatus extends State
 {
     public static function config(): StateConfig
     {
-//        todo : default and transition dynamically
-//        todo : define rollbacks
         $config = parent::config();
         $defaultState = StateModel::query()->where('is_default', true)->first();
         if ($defaultState) {

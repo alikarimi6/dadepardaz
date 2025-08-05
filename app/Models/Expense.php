@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\States\Payment\PaymentStatus;
+use App\States\StateStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,9 +26,10 @@ class Expense extends Model
         'state' ,
     ];
     protected $states = [
-        'state' => PaymentStatus::class,
+        'state' => StateStatus::class,
     ];
     protected $casts = [
+        'state' => StateStatus::class,
     ];
     public function user() : BelongsTo
     {
@@ -53,9 +55,10 @@ class Expense extends Model
         return $this->hasMany(ExpenseStatusTransition::class);
     }
 
-    public function state(): BelongsTo
+    public static function registerStates(): array
     {
-        return $this->belongsTo(State::class);
+        return [
+            'state' => StateStatus::config(),
+        ];
     }
-
 }

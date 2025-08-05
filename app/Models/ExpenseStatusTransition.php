@@ -18,7 +18,8 @@ class ExpenseStatusTransition extends Model
         'to_status' ,
         'user_id',
         'role' ,
-        'transitioned_at'
+        'transitioned_at' ,
+        'comment'
     ];
 
     public function user(): BelongsTo

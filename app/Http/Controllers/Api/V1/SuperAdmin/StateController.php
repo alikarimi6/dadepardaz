@@ -50,9 +50,12 @@ class StateController extends Controller
     public function update(StateUpdateRequest $request, State $state): JsonResponse
     {
         $data = $request->validated();
-        if ($request->has('is_default') && $bool = $data['is_default']) {
-//           todo: ref bool default condition
-            State::query()->where('is_default', false)->update(['is_default' => true]);
+        if ($request->has('is_default') &&  $data['is_default']) {
+            if ($request->boolean('is_default')) {
+                $state->update(['is_default' => true]);
+            } else {
+                $state->update(['is_default' => false]);
+            }
         }
 
         $state->update($data);

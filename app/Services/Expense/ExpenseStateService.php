@@ -4,6 +4,10 @@ namespace App\Services\Expense;
 use App\Models\Expense;
 use App\Models\State;
 use App\Models\Transition;
+use App\States\VerifiedByEdari;
+use App\States\VerifiedByMali;
+use App\States\VerifiedByModir;
+
 class ExpenseStateService
 {
     public static function checkPermission(Expense $expense , $status ): bool
@@ -20,44 +24,33 @@ class ExpenseStateService
         return true;
 
     }
-//        todo : log and verify if modir approved
+//        todo : fire events if modirapproved/full-reject
 
-    public static function attemptTransition(Expense $expense, string $action): bool
+    public static function attemptTransition(Expense $expense, string $action , $comment = null): bool
     {
-        $roleName = auth('sanctum')->user()->getRoleNames()->first();
-        $currentStateModel = State::query()->find( $expense->state->id);
 
+        $roleName = auth('sanctum')->user()->getRoleNames()->first();
+        $currentStateModel = $expense->state;
         if (!$currentStateModel) {
             throw new \Exception("Current state not found.");
         }
+        $nextStateName = self::getNextState($roleName, $action)->name;
 
-        $nextStateModel = self::getNextState($roleName, $action);
-        if (!$nextStateModel) {
+        if (!$nextStateName) {
             throw new \Exception("Target state not found.");
         }
 
-        $transition = Transition::query()->where('from_state_id', $currentStateModel->id)
-            ->where('to_state_id', $nextStateModel->id)
-            ->first();
-
-        if (!$transition) {
-            throw new \Exception("Transition not allowed from '$currentStateModel->name' to '$action'");
-        }
-
-
-        $stateClass = $expense->state->class;
-
-        /** @var \Spatie\ModelStates\State $stateInstance */
-        $stateInstance = new $stateClass($expense);
-//      todo: use package to handle the transitions
-        $expense->state_id = $nextStateModel->id;
-        $expense->save();
+        $currentStateModel->transitionTo(
+            $nextStateName
+        );
 
         PaymentStatusLogger::log(
             $expense->id,
-            $nextStateModel->name,
-            $currentStateModel->name,
-            $roleName
+            $nextStateName,
+            $currentStateModel::$name,
+            $roleName ,
+            $comment
+
         );
 
         return true;
