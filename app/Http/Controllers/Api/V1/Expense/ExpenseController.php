@@ -16,7 +16,6 @@ use App\Models\Expense;
 use App\Models\User;
 use App\Services\Expense\ExpenseStateService;
 use App\States\Payment\VerifiedBySupervisor;
-use http\Env\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
@@ -67,7 +66,7 @@ class ExpenseController extends Controller
     {
         $data = $request->validated();
         try {
-            ExpenseStateService::attemptTransition($expense, $data['action'] , $data['comment']);
+            ExpenseStateService::attemptTransition($expense, $data);
             return response()->json(['message' => 'updated successfully'], 200);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage() , $e], 403);

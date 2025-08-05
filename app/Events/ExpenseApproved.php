@@ -24,7 +24,7 @@ class ExpenseApproved
      */
     public function __construct(
         public Expense $expense ,
-        public $paymentMethod,
+        public $paymentMethod = 'manual',
         public $status = 'approved',
         public $performedBy = null,
     )

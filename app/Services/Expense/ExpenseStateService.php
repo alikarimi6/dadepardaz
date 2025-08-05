@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Services\Expense;
+use App\Events\ExpenseApproved;
+use App\Events\ExpenseRejected;
 use App\Models\Expense;
 use App\Models\State;
 use App\Models\Transition;
@@ -26,7 +28,7 @@ class ExpenseStateService
     }
 //        todo : fire events if modirapproved/full-reject
 
-    public static function attemptTransition(Expense $expense, string $action , $comment = null): bool
+    public static function attemptTransition(Expense $expense, $data): bool
     {
 
         $roleName = auth('sanctum')->user()->getRoleNames()->first();
@@ -34,22 +36,40 @@ class ExpenseStateService
         if (!$currentStateModel) {
             throw new \Exception("Current state not found.");
         }
-        $nextStateName = self::getNextState($roleName, $action)->name;
+        $nextStateName = self::getNextState($roleName, $data['action'])->name;
 
         if (!$nextStateName) {
             throw new \Exception("Target state not found.");
+        }
+        if ($nextStateName == 'approved') {
+            if (!isset($data['payment_method'])){
+                throw new \Exception("payment_method is required.");
+            }
+        }
+
+        if ($nextStateName == 'rejected') {
+            if (!isset($data['rejection_comment'])){
+                throw new \Exception("rejection_comment is required.");
+            }
         }
 
         $currentStateModel->transitionTo(
             $nextStateName
         );
 
+        if ($nextStateName == 'approved') {
+            event(new ExpenseApproved($expense, $data['payment_method']));
+        }
+        if ($nextStateName == 'rejected') {
+            event(new ExpenseRejected($expense, $data['rejection_comment']));
+        }
+
         PaymentStatusLogger::log(
             $expense->id,
             $nextStateName,
             $currentStateModel::$name,
             $roleName ,
-            $comment
+            $data['comment'] ?? null
 
         );
 

@@ -21,7 +21,7 @@ class ExpenseRejected
      */
     public function __construct(
         public Expense $expense  ,
-        public $rejection_comment,
+        public $rejection_comment = 'your expense rejected',
         public $status = 'rejected' ,
         public $performedBy = null
     )

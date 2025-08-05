@@ -24,6 +24,8 @@ class UpdateStatusRequest extends FormRequest
         return [
             'action' => ['required', 'in:approve,reject'],
             'comment' => ['nullable', 'string'],
+            'payment_method' => ['sometimes', 'in:manual,scheduled'],
+            'rejection_comment' => ['nullable', 'string'],
         ];
     }
 }

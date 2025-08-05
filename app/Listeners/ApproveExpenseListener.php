@@ -23,7 +23,7 @@ class ApproveExpenseListener
     /**
      * Handle the event.
      */
-    public function handle(ExpenseApproved $event): void
+    public function handle($event): void
     {
         $event->expense->update([
             'rejection_comment' => null,

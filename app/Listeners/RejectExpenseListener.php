@@ -20,7 +20,7 @@ class RejectExpenseListener
     /**
      * Handle the event.
      */
-    public function handle(ExpenseRejected $event): void
+    public function handle( $event): void
     {
         $event->expense->update([
             'rejection_comment' => $event->rejection_comment,
