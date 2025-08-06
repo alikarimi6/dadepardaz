@@ -12,7 +12,7 @@ class PaymentStatusLogger
             'from_status' => $fromStatus,
             'to_status' => $toStatus,
             'user_id' => auth()->id(),
-            'role' => $role ?? auth()->user()?->getRoleNames()->first(),
+            'role_id' => $role ?? auth('sanctum')->user()->roles->first()->id,
             'transitioned_at' => now(),
             'comment' => $comment
         ]);

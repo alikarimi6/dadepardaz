@@ -22,7 +22,7 @@ class UpdateStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'action' => ['required', 'in:approve,reject,rollback'],
+            'action' => ['required', 'in:approve,reject,rollback,payment'],
             'comment' => ['nullable', 'string'],
             'payment_method' => ['sometimes', 'in:manual,scheduled'],
             'rejection_comment' => ['nullable', 'string'],

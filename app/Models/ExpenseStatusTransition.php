@@ -17,7 +17,7 @@ class ExpenseStatusTransition extends Model
         'from_status' ,
         'to_status' ,
         'user_id',
-        'role' ,
+        'role_id' ,
         'transitioned_at' ,
         'comment'
     ];

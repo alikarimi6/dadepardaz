@@ -46,21 +46,19 @@ class ExpenseStateService
         }
         $fromStatus = $expense->expenseStatusLog->last()->to_status ?? 'requested';
         $fromStatusModel = State::query()->where(['name' => $fromStatus])->first();
+        $transition = Transition::query()
+            ->where('from_state_id', $fromStatusModel->id)
+            ->where('to_state_id', $nextStateModel->id);
 
-        $exists = Transition::query()->where('from_state_id', $fromStatusModel->id)
-            ->where('to_state_id', $nextStateModel->id)
-            ->exists();
-
-        if (!$exists) {
+        if (!$transition->exists()) {
             throw new \Exception("no transition available.");
         }
-
+        $transitionRole = $transition->first()->roles->first()->name;
+        if ($transitionRole != $roleName){
+            throw new \Exception("You don't have permission to transition role.");
+        }
         $currentStateClass->transitionTo(
             $nextStateClass);
-
-
-//        dd($currentStateModel->transitionableStates());
-
 
         if ($nextStateClass == PendingPay::class) {
             event(new ExpenseApproved($expense, $data['payment_method']));
@@ -68,15 +66,13 @@ class ExpenseStateService
         if ($nextStateClass == Rejected::class) {
             event(new ExpenseRejected($expense, $data['rejection_comment']));
         }
-
-
+        $roleId = auth('sanctum')->user()->roles->first()->id;
         PaymentStatusLogger::log(
             $expense->id,
             $nextStateModel->name,
             $fromStatus ?? 'requested',
-            $roleName ,
+            $roleId ,
             $data['comment'] ?? null
-
         );
 
         return true;
