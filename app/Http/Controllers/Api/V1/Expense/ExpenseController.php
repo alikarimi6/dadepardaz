@@ -69,7 +69,7 @@ class ExpenseController extends Controller
             ExpenseStateService::attemptTransition($expense, $data);
             return response()->json(['message' => 'updated successfully'], 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage() , $e], 403);
+            return response()->json(['message' => $e->getMessage(), $e->getLine() , $e->getFile()], 403);
         }
     }
     public function approve(ApproveRequest $request ,Expense $expense , $status = 'approved'): JsonResponse

@@ -30,8 +30,6 @@ class StateController extends Controller
         if ($request->has('is_default')) {
             State::query()->where('is_default', true)->update(['is_default' => false]);
         }
-
-        $data['class'] = config('model-states.default_route'). Str::studly($data['name']);
         $state = State::query()->create($data);
         return response()->json($state, 201);
     }

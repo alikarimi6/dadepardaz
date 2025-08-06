@@ -69,7 +69,7 @@ Route::prefix('superadmin')->middleware(['auth:sanctum' , 'role:superadmin'])->n
 });
 //
 
-Route::prefix('panel')->middleware(['auth:sanctum', CheckRoutePermission::class])->name('panel.')->group(function () {
+Route::prefix('panel')->middleware(['auth:sanctum', 'permission:view-expense-requests'])->name('panel.')->group(function () {
     Route::post('update/{expense}' , [ExpenseController::class, 'updateStatus'])->name('update.status');
 });
 

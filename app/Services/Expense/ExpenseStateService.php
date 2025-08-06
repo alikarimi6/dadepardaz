@@ -4,11 +4,14 @@ namespace App\Services\Expense;
 use App\Events\ExpenseApproved;
 use App\Events\ExpenseRejected;
 use App\Models\Expense;
+use App\Models\ExpenseStatusTransition;
 use App\Models\State;
 use App\Models\Transition;
-use App\States\VerifiedByEdari;
-use App\States\VerifiedByMali;
-use App\States\VerifiedByModir;
+use App\States\Payment\PaymentStatus;
+use App\States\PendingPay;
+use App\States\Rejected;
+use App\States\StateStatus;
+use Dflydev\DotAccessData\Data;
 
 class ExpenseStateService
 {
@@ -29,44 +32,48 @@ class ExpenseStateService
 
     public static function attemptTransition(Expense $expense, $data): bool
     {
-
         $roleName = auth('sanctum')->user()->getRoleNames()->first();
-        $currentStateModel = $expense->state;
-        if (!$currentStateModel) {
+
+        $currentStateClass = $expense->state;
+        if (!$currentStateClass) {
             throw new \Exception("Current state not found.");
         }
-        $nextStateName = self::getNextState($roleName, $data['action'])->name;
+        $nextStateModel = self::getNextState($roleName, $data['action']);
+        $nextStateClass = StateStatus::mapActionToStateClass($nextStateModel->action);
 
-        if (!$nextStateName) {
+        if (!$nextStateModel) {
             throw new \Exception("Target state not found.");
         }
-        if ($nextStateName == 'approved') {
-            if (!isset($data['payment_method'])){
-                throw new \Exception("payment_method is required.");
-            }
+        $fromStatus = $expense->expenseStatusLog->last()->to_status ?? 'requested';
+        $fromStatusModel = State::query()->where(['name' => $fromStatus])->first();
+
+        $exists = Transition::query()->where('from_state_id', $fromStatusModel->id)
+            ->where('to_state_id', $nextStateModel->id)
+            ->exists();
+
+        if (!$exists) {
+            throw new \Exception("no transition available.");
         }
 
-        if ($nextStateName == 'rejected') {
-            if (!isset($data['rejection_comment'])){
-                throw new \Exception("rejection_comment is required.");
-            }
-        }
+        $currentStateClass->transitionTo(
+            $nextStateClass);
 
-        $currentStateModel->transitionTo(
-            $nextStateName
-        );
 
-        if ($nextStateName == 'approved') {
+//        dd($currentStateModel->transitionableStates());
+
+
+        if ($nextStateClass == PendingPay::class) {
             event(new ExpenseApproved($expense, $data['payment_method']));
         }
-        if ($nextStateName == 'rejected') {
+        if ($nextStateClass == Rejected::class) {
             event(new ExpenseRejected($expense, $data['rejection_comment']));
         }
 
+
         PaymentStatusLogger::log(
             $expense->id,
-            $nextStateName,
-            $currentStateModel::$name,
+            $nextStateModel->name,
+            $fromStatus ?? 'requested',
             $roleName ,
             $data['comment'] ?? null
 
